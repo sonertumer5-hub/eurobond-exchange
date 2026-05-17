@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hesap Makinası — eurobondlar.com</title>
+<style>
+:root {
+  --bg:       #0d1117;
+  --surface:  #161b22;
+  --surface2: #1c2128;
+  --border:   #21262d;
+  --border2:  #30363d;
+  --text:     #e6edf3;
+  --muted:    #7d8590;
+  --green:    #3fb950;
+  --red:      #f85149;
+  --yellow:   #d29922;
+  --blue:     #58a6ff;
+  --orange:   #ffa657;
+  --purple:   #bc8cff;
+  --accent:   #1f6feb;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'SF Mono','Fira Code','Cascadia Code',monospace; font-size: 12px;
+  min-height: 100vh;
+}
+
+/* ── Nav ── */
+header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 20px; height: 48px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.logo { font-size: 15px; font-weight: 700; color: var(--blue); letter-spacing: .5px; text-decoration: none; }
+.logo span { color: var(--muted); font-weight: 400; }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+nav { margin-left: auto; display: flex; gap: 4px; }
+.nav-link {
+  color: var(--muted); text-decoration: none; padding: 5px 10px;
+  border-radius: 6px; font-size: 11px; transition: all .15s;
+}
+.nav-link:hover { background: var(--border2); color: var(--text); }
+.nav-link.active { background: var(--border2); color: var(--blue); }
+
+/* ── Page ── */
+.page { max-width: 1240px; margin: 0 auto; padding: 28px 20px 60px; }
+.page-title { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+.page-sub { color: var(--muted); font-size: 11px; margin-bottom: 24px; }
+
+/* ── Layout grid ── */
+.layout { display: grid; grid-template-columns: 360px 1fr; gap: 16px; align-items: start; }
+
+/* ── Card ── */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 18px;
+}
+.card + .card { margin-top: 14px; }
+.card-title {
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px;
+}
+
+/* ── Form ── */
+.fg { margin-bottom: 14px; }
+.fg:last-child { margin-bottom: 0; }
+label { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+.ctrl {
+  width: 100%; background: var(--bg); border: 1px solid var(--border2);
+  border-radius: 6px; padding: 8px 11px; color: var(--text);
+  font-family: inherit; font-size: 12px; outline: none; transition: border-color .15s;
+}
+.ctrl:focus { border-color: var(--blue); }
+select.ctrl option { background: var(--surface); }
+.ctrl::placeholder { color: var(--border2); }
+
+/* Bond info strip */
+.bond-strip {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 10px 12px; margin-bottom: 14px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px;
+}
+.si-label { font-size: 10px; color: var(--muted); }
+.si-val { font-size: 11px; font-weight: 600; color: var(--text); margin-top: 1px; }
+.si-val.green { color: var(--green); }
+.si-val.yellow { color: var(--yellow); }
+
+/* ── Divider ── */
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+/* ── Results ── */
+.res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.res-item {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 11px 13px;
+}
+.res-item.hl { border-color: var(--blue); background: rgba(88,166,255,.04); }
+.res-item.hl2 { border-color: var(--yellow); background: rgba(210,153,34,.04); }
+.res-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+.res-val { font-size: 22px; font-weight: 700; }
+.res-val.g { color: var(--green); }
+.res-val.y { color: var(--yellow); }
+.res-val.b { color: var(--blue); }
+.res-val.o { color: var(--orange); }
+.res-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* Metrics row */
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.met { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 9px 11px; }
+.met-label { font-size: 10px; color: var(--muted); }
+.met-val { font-size: 13px; font-weight: 600; margin-top: 2px; }
+
+/* Next coupon bar */
+.nc-bar {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 10px 14px; margin-bottom: 12px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+}
+.nc-item .nc-label { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+.nc-item .nc-val { font-size: 13px; font-weight: 600; }
+
+/* Placeholder */
+.ph-msg { color: var(--muted); font-size: 12px; text-align: center; padding: 48px 0; }
+
+/* ── Cashflow table ── */
+.cf-wrap { max-height: 340px; overflow-y: auto; }
+.cf-wrap::-webkit-scrollbar { width: 4px; }
+.cf-wrap::-webkit-scrollbar-track { background: var(--bg); }
+.cf-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+table.cf { width: 100%; border-collapse: collapse; }
+table.cf th {
+  font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em;
+  padding: 5px 8px; text-align: right; border-bottom: 1px solid var(--border2);
+  position: sticky; top: 0; background: var(--surface);
+}
+table.cf th:first-child { text-align: left; }
+table.cf td { padding: 5px 8px; font-size: 11px; text-align: right; border-bottom: 1px solid rgba(33,38,45,.8); }
+table.cf td:first-child { text-align: left; color: var(--muted); }
+table.cf tr.next td { background: rgba(88,166,255,.04); }
+table.cf tr.next td:first-child { color: var(--blue); }
+table.cf tr.final td { color: var(--orange); }
+table.cf tr.final td:first-child { color: var(--orange); }
+table.cf tfoot td { font-weight: 700; color: var(--text); border-top: 1px solid var(--border2); border-bottom: none; padding-top: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="live-dot"></div>
+  <a class="logo" href="/">eurobondlar<span>.com</span></a>
+  <nav>
+    <a class="nav-link" href="/">İşlem Platformu</a>
+    <a class="nav-link active" href="/calculator">Hesap Makinası</a>
+  </nav>
+</header>
+
+<div class="page">
+  <div class="page-title">Eurobond Hesap Makinası</div>
+  <div class="page-sub">Türkiye Cumhuriyeti Eurobondları · Getiri, Kirli Fiyat ve Risk Metrikleri · 30/360 ISMA · BEY</div>
+
+  <div class="layout">
+
+    <!-- ── Sol: Giriş ── -->
+    <div>
+      <div class="card">
+        <div class="card-title">Tahvil Seçimi</div>
+
+        <div class="fg">
+          <label>Tahvil</label>
+          <select class="ctrl" id="selBond" onchange="onBondChange()">
+            <option value="">— Tahvil seçin —</option>
+          </select>
+        </div>
+
+        <div class="bond-strip" id="bondStrip">
+          <div><div class="si-label">ISIN</div><div class="si-val" id="si-isin">—</div></div>
+          <div><div class="si-label">Para Birimi</div><div class="si-val yellow" id="si-ccy">—</div></div>
+          <div><div class="si-label">Kupon Oranı</div><div class="si-val green" id="si-cpn">—</div></div>
+          <div><div class="si-label">Vade Tarihi</div><div class="si-val" id="si-mat">—</div></div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="card-title" style="margin-bottom:10px">Fiyat & Tutar</div>
+
+        <div class="fg">
+          <label>Temiz Fiyat — Clean Price (nominal %)</label>
+          <input class="ctrl" type="number" id="inPrice" placeholder="ör: 98.750" step="0.001" min="1" max="200" oninput="calc()">
+        </div>
+
+        <div class="fg">
+          <label>Nominal Tutar (USD)</label>
+          <input class="ctrl" type="number" id="inNominal" placeholder="ör: 100 000" step="1000" min="1000" oninput="calc()">
+        </div>
+
+        <div class="fg">
+          <label>Valör / Settlement Tarihi</label>
+          <input class="ctrl" type="date" id="inSettle" oninput="calc()">
+        </div>
+      </div>
+
+      <!-- Kupon özeti -->
+      <div class="card" id="cpnCard" style="display:none">
+        <div class="card-title">Kupon Bilgisi</div>
+        <div class="bond-strip" style="grid-template-columns:1fr 1fr 1fr; gap:8px;">
+          <div><div class="si-label">Yıllık Kupon</div><div class="si-val green" id="ci-annual">—</div></div>
+          <div><div class="si-label">Yarıyıl Kupon</div><div class="si-val green" id="ci-semi">—</div></div>
+          <div><div class="si-label">Kupon Frekansı</div><div class="si-val" id="ci-freq">2x / yıl</div></div>
+          <div><div class="si-label">Son Kupon</div><div class="si-val" id="ci-prev">—</div></div>
+          <div><div class="si-label">Sonraki Kupon</div><div class="si-val blue" id="ci-next">—</div></div>
+          <div><div class="si-label">Tahakkuk Gün</div><div class="si-val" id="ci-accdays">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Sağ: Sonuçlar ── -->
+    <div id="rightPanel">
+
+      <div class="card" id="resCard">
+        <div class="card-title">Hesaplama Sonuçları</div>
+        <div class="ph-msg" id="phMsg">Tahvil seçip fiyat girin</div>
+
+        <div id="resBody" style="display:none">
+
+          <div class="res-grid">
+            <div class="res-item hl">
+              <div class="res-label">Getiri (YTM)</div>
+              <div class="res-val g" id="rYTM">—</div>
+              <div class="res-sub">Bond Equivalent Yield · 30/360 ISMA</div>
+            </div>
+            <div class="res-item hl2">
+              <div class="res-label">Kirli Fiyat — Dirty Price</div>
+              <div class="res-val y" id="rDirtyPct">—</div>
+              <div class="res-sub" id="rDirtyUSD">— USD / 1 tahvil</div>
+            </div>
+            <div class="res-item">
+              <div class="res-label">Birikmiş Faiz — Accrued Interest</div>
+              <div class="res-val" id="rAI">—</div>
+              <div class="res-sub" id="rAIUSD">— USD / 1 tahvil</div>
+            </div>
+            <div class="res-item">
+              <div class="res-label">Toplam Maliyet</div>
+              <div class="res-val b" id="rTotal">—</div>
+              <div class="res-sub" id="rTotalSub">nominal tutar girin</div>
+            </div>
+          </div>
+
+          <div class="metrics">
+            <div class="met">
+              <div class="met-label">Macaulay Dur.</div>
+              <div class="met-val" id="rMacDur">—</div>
+            </div>
+            <div class="met">
+              <div class="met-label">Modified Dur.</div>
+              <div class="met-val" id="rModDur">—</div>
+            </div>
+            <div class="met">
+              <div class="met-label">DV01</div>
+              <div class="met-val" id="rDV01">—</div>
+            </div>
+            <div class="met">
+              <div class="met-label">Vadeye Gün</div>
+              <div class="met-val" id="rDaysToMat">—</div>
+            </div>
+          </div>
+
+          <div class="nc-bar">
+            <div class="nc-item">
+              <div class="nc-label">Sonraki Kupon Tarihi</div>
+              <div class="nc-val" style="color:var(--blue)" id="rNextDate">—</div>
+            </div>
+            <div class="nc-item">
+              <div class="nc-label">Kalan Gün</div>
+              <div class="nc-val" style="color:var(--blue)" id="rNextDays">—</div>
+            </div>
+            <div class="nc-item">
+              <div class="nc-label">Kupon Ödemesi</div>
+              <div class="nc-val" style="color:var(--green)" id="rNextAmt">—</div>
+            </div>
+            <div class="nc-item">
+              <div class="nc-label">Kalan Kupon Sayısı</div>
+              <div class="nc-val" id="rRemCpn">—</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Nakit akışı tablosu -->
+      <div class="card" id="cfCard" style="display:none; margin-top:14px">
+        <div class="card-title">Nakit Akışı Takvimi</div>
+        <div class="cf-wrap">
+          <table class="cf">
+            <thead>
+              <tr>
+                <th>Tarih</th>
+                <th style="text-align:left">Tür</th>
+                <th>Kupon</th>
+                <th>Anapara</th>
+                <th>Toplam CF</th>
+                <th>PV (YTM ile)</th>
+              </tr>
+            </thead>
+            <tbody id="cfBody"></tbody>
+            <tfoot><tr>
+              <td colspan="2">TOPLAM</td>
+              <td id="ftCpn"></td>
+              <td id="ftPrinc"></td>
+              <td id="ftTotal"></td>
+              <td id="ftPV"></td>
+            </tr></tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Türkiye Eurobondları (Hazine, aktif ihraçlar) ────────────────────────────
+const BONDS = [
+  { isin:"US900123CT57", coupon:7.625, maturity:"2029-04-26" },
+  { isin:"US900123CQ28", coupon:7.500, maturity:"2034-11-07" },
+  { isin:"US900123DA02", coupon:6.875, maturity:"2036-03-17" },
+  { isin:"US900123CH16", coupon:7.000, maturity:"2036-06-05" },
+  { isin:"US900123CF59", coupon:6.750, maturity:"2040-05-30" },
+  { isin:"US900123CV03", coupon:6.000, maturity:"2041-01-14" },
+  { isin:"US900123CR02", coupon:4.875, maturity:"2043-04-16" },
+  { isin:"US900123DB84", coupon:5.750, maturity:"2047-05-11" },
+];
+
+let bond = null;
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+(function init() {
+  const sel = document.getElementById('selBond');
+  BONDS.forEach((b, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    const yr = b.maturity.slice(0,4);
+    opt.textContent = `TC ${b.coupon.toFixed(3)}%  ${b.maturity}  ·  ${b.isin}`;
+    sel.appendChild(opt);
+  });
+  const t = new Date();
+  document.getElementById('inSettle').value =
+    `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+})();
+
+// ── Bond change ───────────────────────────────────────────────────────────────
+function onBondChange() {
+  const idx = document.getElementById('selBond').value;
+  if (idx === '') { bond = null; clearRight(); return; }
+  bond = BONDS[parseInt(idx)];
+  document.getElementById('si-isin').textContent  = bond.isin;
+  document.getElementById('si-ccy').textContent   = 'USD';
+  document.getElementById('si-cpn').textContent   = bond.coupon.toFixed(3) + '%';
+  document.getElementById('si-mat').textContent   = bond.maturity;
+  calc();
+}
+
+// ── 30/360 ISMA ──────────────────────────────────────────────────────────────
+function d360(y1,m1,d1, y2,m2,d2) {
+  if (d1===31) d1=30;
+  if (d2===31 && d1===30) d2=30;
+  return 360*(y2-y1) + 30*(m2-m1) + (d2-d1);
+}
+
+function dActual(y1,m1,d1, y2,m2,d2) {
+  return Math.round((Date.UTC(y2,m2-1,d2) - Date.UTC(y1,m1-1,d1)) / 86400000);
+}
+
+function fmtDate(y,m,d) {
+  return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+// ── Build coupon schedule from maturity backwards ─────────────────────────────
+function buildSchedule(b, sy,sm,sd) {
+  const [my,mm,md] = b.maturity.split('-').map(Number);
+  if (d360(sy,sm,sd, my,mm,md) <= 0) return null;
+
+  const dates = [];
+  let cy=my, cm=mm, cd=md;
+  while (d360(sy,sm,sd, cy,cm,cd) > 0) {
+    dates.unshift([cy,cm,cd]);
+    cm -= 6;
+    if (cm <= 0) { cm += 12; cy--; }
+  }
+  if (!dates.length) return null;
+
+  return { dates, prev:[cy,cm,cd], next:dates[0] };
+}
+
+// ── Newton-Raphson YTM ────────────────────────────────────────────────────────
+function solveYTM(cfs, dirtyPct) {
+  const guess = cfs[0] ? cfs[0].cf / 2 : 0.04;
+  let r = guess;
+  for (let i=0; i<400; i++) {
+    const f  = cfs.reduce((s,{t,cf}) => s + cf/Math.pow(1+r,t), 0) - dirtyPct;
+    const df = (cfs.reduce((s,{t,cf}) => s + cf/Math.pow(1+r+1e-8,t), 0) - dirtyPct - f) / 1e-8;
+    if (Math.abs(df) < 1e-16) break;
+    const rn = r - f/df;
+    if (Math.abs(rn-r) < 1e-11) { r=rn; break; }
+    r = Math.max(rn, -0.49);
+  }
+  return r;
+}
+
+// ── Format helpers ────────────────────────────────────────────────────────────
+const fmt2 = v => '$' + v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt0 = v => '$' + Math.round(v).toLocaleString('en-US');
+
+// ── Main calculation ──────────────────────────────────────────────────────────
+function calc() {
+  if (!bond) { clearRight(); return; }
+
+  const priceStr = document.getElementById('inPrice').value.trim();
+  const nomStr   = document.getElementById('inNominal').value.trim();
+  const setStr   = document.getElementById('inSettle').value;
+  if (!priceStr) { clearRight(); return; }
+
+  const cleanPct = parseFloat(priceStr);
+  if (isNaN(cleanPct) || cleanPct <= 0) { clearRight(); return; }
+
+  // Settle
+  let sy,sm,sd;
+  if (setStr) {
+    [sy,sm,sd] = setStr.split('-').map(Number);
+  } else {
+    const t = new Date();
+    [sy,sm,sd] = [t.getFullYear(), t.getMonth()+1, t.getDate()];
+  }
+
+  const [my,mm,md] = bond.maturity.split('-').map(Number);
+  const daysToMat = dActual(sy,sm,sd, my,mm,md);
+  if (daysToMat <= 0) { showErr('Tahvil vadesi geçmiş'); return; }
+
+  const sched = buildSchedule(bond, sy,sm,sd);
+  if (!sched) { showErr('Kupon takvimi oluşturulamadı'); return; }
+
+  const { dates, prev:[ly,lm,ld], next:[ny,nm,nd] } = sched;
+
+  const semiCpn     = bond.coupon / 100 / 2;
+  const periodDays  = d360(ly,lm,ld, ny,nm,nd);  // = 180 for 30/360
+  const accruedDays = d360(ly,lm,ld, sy,sm,sd);
+  const aiDec       = semiCpn * (accruedDays / periodDays);
+  const dirtyDec    = cleanPct / 100 + aiDec;
+
+  // Cash flows (t in semi-annual periods)
+  const cfs = dates.map(([fy,fm,fd], i) => ({
+    t:    d360(sy,sm,sd, fy,fm,fd) / periodDays,
+    cf:   i === dates.length-1 ? semiCpn + 1 : semiCpn,
+    date: [fy,fm,fd],
+    last: i === dates.length-1,
+  }));
+
+  const r   = solveYTM(cfs, dirtyDec);
+  const ytm = r * 2;
+
+  // Macaulay Duration (semi-annual periods)
+  const pvSum     = cfs.reduce((s,{t,cf}) => s + cf/Math.pow(1+r,t), 0);
+  const macSemi   = cfs.reduce((s,{t,cf}) => s + t*cf/Math.pow(1+r,t), 0) / pvSum;
+  const macYears  = macSemi * 0.5;
+  const modDur    = macYears / (1 + r);
+
+  // Nominals
+  const nominal   = nomStr ? parseFloat(nomStr) : null;
+  const scale     = nominal || 1000;
+  const dv01      = dirtyDec * scale * modDur * 0.0001;
+  const totalCost = dirtyDec * scale;
+
+  // ── Update coupon info card ───────────────────────────────────────────────
+  document.getElementById('cpnCard').style.display = 'block';
+  document.getElementById('ci-annual').textContent  = fmt2(bond.coupon/100 * 1000) + '/tahvil';
+  document.getElementById('ci-semi').textContent    = fmt2(semiCpn * 1000) + '/tahvil';
+  document.getElementById('ci-freq').textContent    = '2x / yıl';
+  document.getElementById('ci-prev').textContent    = fmtDate(ly,lm,ld);
+  document.getElementById('ci-next').textContent    = fmtDate(ny,nm,nd);
+  document.getElementById('ci-accdays').textContent = accruedDays + ' gün';
+
+  // ── Update results ────────────────────────────────────────────────────────
+  showRes();
+
+  document.getElementById('rYTM').textContent       = (ytm*100).toFixed(3) + '%';
+  document.getElementById('rDirtyPct').textContent  = (dirtyDec*100).toFixed(4) + '%';
+  document.getElementById('rDirtyUSD').textContent  = fmt2(dirtyDec*1000) + ' / 1 tahvil (1 000 nominal)';
+  document.getElementById('rAI').textContent        = (aiDec*100).toFixed(4) + '%';
+  document.getElementById('rAIUSD').textContent     = fmt2(aiDec*1000) + ' / 1 tahvil';
+
+  if (nominal) {
+    document.getElementById('rTotal').textContent    = fmt2(totalCost);
+    document.getElementById('rTotalSub').textContent = (nominal/1000).toLocaleString('en-US') + ' adet tahvil · ' + fmt2(nominal) + ' nominal';
+    document.getElementById('rNextAmt').textContent  = fmt2(semiCpn * nominal);
+  } else {
+    document.getElementById('rTotal').textContent    = '—';
+    document.getElementById('rTotalSub').textContent = 'nominal tutar girin';
+    document.getElementById('rNextAmt').textContent  = fmt2(semiCpn * 1000) + ' / 1 tahvil';
+  }
+
+  document.getElementById('rMacDur').textContent   = macYears.toFixed(3) + ' yıl';
+  document.getElementById('rModDur').textContent   = modDur.toFixed(3) + ' yıl';
+  document.getElementById('rDV01').textContent     = fmt2(dv01);
+  document.getElementById('rDaysToMat').textContent = daysToMat.toLocaleString('en-US') + ' gün';
+
+  document.getElementById('rNextDate').textContent  = fmtDate(ny,nm,nd);
+  document.getElementById('rNextDays').textContent  = dActual(sy,sm,sd, ny,nm,nd) + ' gün';
+  document.getElementById('rRemCpn').textContent    = dates.length + ' ödeme';
+
+  // ── Cashflow table ────────────────────────────────────────────────────────
+  const tbody = document.getElementById('cfBody');
+  tbody.innerHTML = '';
+  let sumCpn=0, sumPrinc=0, sumTotal=0, sumPV=0;
+
+  cfs.forEach(({date:[fy,fm,fd], cf, last, t}, idx) => {
+    const cpnAmt    = semiCpn * scale;
+    const princAmt  = last ? scale : 0;
+    const totalCF   = cf * scale;
+    const pvCF      = cf / Math.pow(1+r,t) * scale;
+
+    sumCpn   += cpnAmt;
+    sumPrinc += princAmt;
+    sumTotal += totalCF;
+    sumPV    += pvCF;
+
+    const tr = document.createElement('tr');
+    if (last) tr.className = 'final';
+    else if (idx === 0) tr.className = 'next';
+
+    const typeLabel = last ? 'Son Kupon + Anapara'
+                    : idx===0 ? 'Sonraki Kupon'
+                    : 'Kupon';
+
+    tr.innerHTML = `
+      <td>${fmtDate(fy,fm,fd)}</td>
+      <td style="text-align:left">${typeLabel}</td>
+      <td>${fmt2(cpnAmt)}</td>
+      <td>${last ? fmt2(princAmt) : '—'}</td>
+      <td>${fmt2(totalCF)}</td>
+      <td style="color:var(--muted)">${fmt2(pvCF)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('ftCpn').textContent   = fmt2(sumCpn);
+  document.getElementById('ftPrinc').textContent = fmt2(sumPrinc);
+  document.getElementById('ftTotal').textContent = fmt2(sumTotal);
+  document.getElementById('ftPV').textContent    = fmt2(sumPV);
+
+  document.getElementById('cfCard').style.display = 'block';
+}
+
+function showRes() {
+  document.getElementById('phMsg').style.display   = 'none';
+  document.getElementById('resBody').style.display = 'block';
+}
+
+function clearRight() {
+  document.getElementById('phMsg').style.display   = 'block';
+  document.getElementById('phMsg').textContent     = 'Tahvil seçip fiyat girin';
+  document.getElementById('resBody').style.display = 'none';
+  document.getElementById('cfCard').style.display  = 'none';
+  document.getElementById('cpnCard').style.display = 'none';
+}
+
+function showErr(msg) {
+  document.getElementById('phMsg').style.display   = 'block';
+  document.getElementById('phMsg').textContent     = '⚠ ' + msg;
+  document.getElementById('resBody').style.display = 'none';
+  document.getElementById('cfCard').style.display  = 'none';
+}
+</script>
+</body>
+</html>

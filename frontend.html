@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>eurobondlar.com</title>
+<style>
+:root {
+  --bg:        #0d1117;
+  --surface:   #161b22;
+  --border:    #21262d;
+  --text:      #e6edf3;
+  --muted:     #7d8590;
+  --green:     #3fb950;
+  --red:       #f85149;
+  --yellow:    #d29922;
+  --blue:      #58a6ff;
+  --green-dim: #1a3828;
+  --red-dim:   #3d1a1a;
+  --accent:    #1f6feb;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'SF Mono','Fira Code',monospace; font-size: 12px;
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ── Header ── */
+header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 16px; height: 48px; display: flex; align-items: center; gap: 14px; flex-shrink: 0;
+}
+.logo { font-size: 15px; font-weight: 700; color: var(--blue); letter-spacing: .5px; }
+.logo span { color: var(--muted); font-weight: 400; }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 1.5s infinite; flex-shrink: 0; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+select.user-select {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  padding: 5px 8px; border-radius: 6px; font-family: inherit; font-size: 11px; cursor: pointer;
+}
+button { cursor: pointer; font-family: inherit; font-size: 11px; border: none; border-radius: 6px; padding: 5px 12px; transition: opacity .15s; }
+button:hover { opacity: .85; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-ghost   { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.ml-auto { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+/* ── Bond Tabs ── */
+.bond-tabs {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; padding: 0 16px; overflow-x: auto; flex-shrink: 0;
+}
+.bond-tab {
+  padding: 10px 14px; cursor: pointer; color: var(--muted);
+  border-bottom: 2px solid transparent; white-space: nowrap; font-size: 11px; transition: color .15s;
+}
+.bond-tab:hover { color: var(--text); }
+.bond-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+.bond-tab .coupon   { color: var(--green); font-size: 10px; margin-left: 4px; }
+.bond-tab .currency { color: var(--yellow); font-size: 10px; margin-left: 4px; }
+
+/* ── 3-column grid ── */
+.main {
+  display: grid; grid-template-columns: 270px 1fr 290px;
+  gap: 1px; background: var(--border); flex: 1; overflow: hidden; min-height: 0;
+}
+.panel { background: var(--bg); display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── Panel header ── */
+.ph {
+  padding: 8px 14px; background: var(--surface); border-bottom: 1px solid var(--border);
+  font-size: 10px; color: var(--muted); letter-spacing: .8px; text-transform: uppercase;
+  font-weight: 600; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.badge { background: var(--border); color: var(--text); padding: 2px 6px; border-radius: 4px; font-size: 9px; }
+
+/* ── Order Book ── */
+.ob-col-header {
+  display: grid; grid-template-columns: 62px 1fr 1fr 58px;
+  padding: 5px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; gap: 4px;
+}
+.ob-col-header span { color: var(--muted); font-size: 10px; }
+.ob-col-header span:not(:first-child) { text-align: right; }
+
+.ob-asks { flex: 1; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-end; }
+.ob-bids { flex: 1; overflow-y: auto; }
+
+.ob-row {
+  display: grid; grid-template-columns: 62px 1fr 1fr 58px;
+  padding: 3px 14px; position: relative; cursor: default; gap: 4px;
+}
+.ob-row:hover { background: rgba(255,255,255,.03); }
+.ob-bar { position: absolute; top:0; bottom:0; opacity:.14; pointer-events:none; }
+.ob-bar.ask { background: var(--red);   left: 0; }
+.ob-bar.bid { background: var(--green); right: 0; }
+.price-ask { color: var(--red);   font-weight: 600; }
+.price-bid { color: var(--green); font-weight: 600; }
+.ob-qty    { text-align: right; color: var(--text); }
+.ob-total  { text-align: right; color: var(--muted); }
+.ob-yield  { text-align: right; color: var(--purple); font-size: 10px; }
+
+.spread-bar {
+  padding: 6px 14px; background: var(--surface);
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px;
+  font-size: 10px; flex-shrink: 0;
+}
+.spread-bar .lbl { color: var(--muted); }
+.spread-bar .sv  { color: var(--yellow); font-weight: 600; }
+.spread-bar .bb  { color: var(--green);  font-weight: 600; }
+.spread-bar .ba  { color: var(--red);    font-weight: 600; }
+.spread-bar .yv  { color: var(--purple); font-weight: 600; }
+
+/* ── Center panel ── */
+.center-panel { display: flex; flex-direction: column; }
+
+.ticker-bar {
+  padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: baseline; gap: 10px; flex-shrink: 0;
+}
+.ticker-issuer   { color: var(--muted); font-size: 10px; display: block; margin-bottom: 2px; }
+.ticker-price    { font-size: 26px; font-weight: 700; }
+.ticker-change   { font-size: 13px; }
+.up              { color: var(--green); }
+.down            { color: var(--red); }
+.ticker-meta     { margin-left: auto; display: flex; gap: 18px; }
+.ticker-stat     { display: flex; flex-direction: column; align-items: flex-end; }
+.ticker-stat-lbl { color: var(--muted); font-size: 10px; }
+.ticker-stat-val { font-size: 12px; font-weight: 600; }
+
+/* Chart */
+.chart-wrap {
+  flex: 1; min-height: 0; display: flex; flex-direction: column;
+  padding: 8px 14px 4px; gap: 4px;
+}
+.chart-toolbar { display: flex; gap: 5px; align-items: center; flex-shrink: 0; padding: 4px 14px 0; }
+.tf-btn {
+  background: transparent; border: 1px solid var(--border); color: var(--muted);
+  padding: 2px 8px; font-size: 10px; border-radius: 4px; cursor: pointer;
+}
+.tf-btn.active { border-color: var(--blue); color: var(--blue); background: rgba(88,166,255,.08); }
+canvas { display: block; border-radius: 3px; }
+
+/* Trades */
+.trade-hdr {
+  display: grid; grid-template-columns: 68px 32px 80px 55px 1fr;
+  gap: 5px; padding: 4px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.trade-hdr span { color: var(--muted); font-size: 10px; }
+.trades-list { flex: 1; overflow-y: auto; }
+.trade-row {
+  display: grid; grid-template-columns: 68px 32px 80px 55px 1fr;
+  gap: 5px; padding: 3px 14px; border-bottom: 1px solid rgba(33,38,45,.4); align-items: center;
+}
+.trade-row:hover { background: rgba(255,255,255,.02); }
+.trade-time  { color: var(--muted); font-size: 10px; }
+.trade-dir   { font-size: 9px; font-weight: 700; padding: 1px 3px; border-radius: 3px; text-align: center; }
+.dir-buy  { background: rgba(63,185,80,.2);  color: var(--green); }
+.dir-sell { background: rgba(248,81,73,.2);  color: var(--red); }
+.price-buy  { color: var(--green); font-weight: 600; }
+.price-sell { color: var(--red);   font-weight: 600; }
+.trade-qty     { color: var(--text); }
+.trade-parties { color: var(--muted); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Right panel ── */
+.right-panel { display: flex; flex-direction: column; overflow: hidden; }
+.order-form  { padding: 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.side-tabs   { display: flex; gap: 4px; margin-bottom: 10px; }
+.side-tab {
+  flex: 1; padding: 7px; text-align: center; border-radius: 6px; cursor: pointer;
+  font-weight: 600; font-size: 11px; border: 1px solid var(--border); color: var(--muted); background: transparent;
+}
+.side-tab.buy.active  { background: var(--green-dim); color: var(--green); border-color: var(--green); }
+.side-tab.sell.active { background: var(--red-dim);   color: var(--red);   border-color: var(--red); }
+
+.form-row { margin-bottom: 8px; }
+label { display: block; color: var(--muted); font-size: 10px; margin-bottom: 3px; text-transform: uppercase; }
+input, select.fs {
+  width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  padding: 7px 10px; border-radius: 6px; font-family: inherit; font-size: 12px; outline: none;
+}
+input:focus, select.fs:focus { border-color: var(--accent); }
+.type-toggle { display: flex; gap: 4px; }
+.type-btn {
+  flex: 1; padding: 6px; text-align: center; border-radius: 5px; cursor: pointer;
+  font-size: 10px; border: 1px solid var(--border); color: var(--muted); background: transparent;
+}
+.type-btn.active { background: var(--surface); color: var(--text); border-color: var(--blue); }
+.submit-btn { width: 100%; padding: 9px; font-size: 13px; font-weight: 700; border-radius: 6px; margin-top: 8px; }
+.submit-btn.buy  { background: var(--green); color: #000; }
+.submit-btn.sell { background: var(--red);   color: #fff; }
+.order-cost { color: var(--muted); font-size: 10px; margin-top: 4px; text-align: right; }
+
+.portfolio-body { flex: 1; overflow-y: auto; }
+.port-row  { padding: 7px 14px; border-bottom: 1px solid rgba(33,38,45,.5); display: flex; justify-content: space-between; }
+.port-lbl  { color: var(--muted); font-size: 10px; }
+.port-val  { font-weight: 600; }
+.hold-row  { padding: 5px 14px; border-bottom: 1px solid rgba(33,38,45,.3); display: flex; justify-content: space-between; }
+.hold-isin { color: var(--blue); font-size: 10px; }
+.hold-qty  { font-weight: 600; }
+
+.orders-body { flex: 1; overflow-y: auto; }
+.order-item   { padding: 7px 14px; border-bottom: 1px solid rgba(33,38,45,.4); }
+.order-top    { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+.os-buy  { color: var(--green); font-size: 10px; font-weight: 700; }
+.os-sell { color: var(--red);   font-size: 10px; font-weight: 700; }
+.o-status { font-size: 9px; padding: 1px 5px; border-radius: 3px; }
+.s-pending   { background: rgba(210,153,34,.2); color: var(--yellow); }
+.s-partial   { background: rgba(88,166,255,.2); color: var(--blue); }
+.s-filled    { background: rgba(63,185,80,.2);  color: var(--green); }
+.s-cancelled { background: rgba(125,133,144,.2);color: var(--muted); }
+.order-bot   { color: var(--muted); font-size: 10px; display: flex; justify-content: space-between; }
+.cancel-btn  { background: transparent; border: 1px solid var(--red); color: var(--red); padding: 1px 6px; font-size: 9px; border-radius: 4px; }
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.75);
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 22px; width: 350px; }
+.modal h3 { margin-bottom: 14px; font-size: 14px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+.modal-actions button { flex: 1; padding: 9px; font-size: 12px; }
+
+/* ── Toast ── */
+.toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 6px; z-index: 200; }
+.toast {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 13px; font-size: 11px; max-width: 270px;
+  animation: slideIn .25s ease;
+}
+.toast.success { border-color: var(--green); }
+.toast.error   { border-color: var(--red); }
+@keyframes slideIn { from{transform:translateX(16px);opacity:0} to{transform:none;opacity:1} }
+
+/* ── Bottom bar ── */
+.bottom-bar {
+  background: var(--surface); border-top: 1px solid var(--border);
+  height: 22px; display: flex; align-items: center; padding: 0 14px; gap: 14px;
+  font-size: 10px; color: var(--muted); flex-shrink: 0;
+}
+
+.empty { padding: 18px; text-align: center; color: var(--muted); font-size: 11px; }
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="live-dot"></div>
+  <div class="logo">eurobondlar<span>.com</span></div>
+  <select class="user-select" id="userSelect" onchange="onUserChange()">
+    <option value="">— Kullanıcı seç —</option>
+  </select>
+  <div class="ml-auto">
+    <a href="/calculator" style="color:var(--muted);text-decoration:none;font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;margin-right:4px;">Hesap Makinası</a>
+    <button class="btn-primary" onclick="showCreateUserModal()">+ Kullanıcı</button>
+    <button class="btn-ghost" onclick="showDepositModal()">Para Yatır</button>
+    <button class="btn-ghost" onclick="showDepositBondModal()">Tahvil Yatır</button>
+  </div>
+</header>
+
+<div class="bond-tabs" id="bondTabs"></div>
+
+<div class="main">
+
+  <!-- LEFT: Order Book -->
+  <div class="panel">
+    <div class="ph">Order Book <span class="badge" id="obIsin">—</span></div>
+    <div class="ob-col-header">
+      <span>Fiyat</span><span>Nominal</span><span>Toplam Tutar</span><span>Verim</span>
+    </div>
+    <div class="ob-asks" id="asksContainer"></div>
+    <div class="spread-bar">
+      <span><span class="lbl">Spread </span><span class="sv" id="spreadVal">—</span></span>
+      <span><span class="lbl">Mid Verim </span><span class="yv" id="midYieldVal">—</span></span>
+      <span><span class="lbl">Best Bid </span><span class="bb" id="bestBidVal">—</span></span>
+      <span><span class="lbl">Bid Verim </span><span class="yv" id="bidYieldVal">—</span></span>
+      <span><span class="lbl">Best Ask </span><span class="ba" id="bestAskVal">—</span></span>
+      <span><span class="lbl">Ask Verim </span><span class="yv" id="askYieldVal">—</span></span>
+    </div>
+    <div class="ob-bids" id="bidsContainer"></div>
+  </div>
+
+  <!-- CENTER: Ticker + Chart + Trades -->
+  <div class="panel center-panel">
+
+    <div class="ticker-bar">
+      <div>
+        <span class="ticker-issuer" id="tickerIssuer">—</span>
+        <span class="ticker-price" id="tickerPrice">—</span>
+      </div>
+      <span class="ticker-change" id="tickerChange"></span>
+      <div class="ticker-meta">
+        <div class="ticker-stat"><span class="ticker-stat-lbl">Vadesi</span>   <span class="ticker-stat-val" id="tickerMaturity">—</span></div>
+        <div class="ticker-stat"><span class="ticker-stat-lbl">Kupon</span>    <span class="ticker-stat-val" id="tickerCoupon">—</span></div>
+        <div class="ticker-stat"><span class="ticker-stat-lbl">Döviz</span>    <span class="ticker-stat-val" id="tickerCurrency">—</span></div>
+      </div>
+    </div>
+
+    <div class="ph">
+      Fiyat &amp; Hacim
+      <div style="display:flex;gap:4px">
+        <button class="tf-btn active" id="tf10"  onclick="setTF(10,this)">10s</button>
+        <button class="tf-btn"        id="tf30"  onclick="setTF(30,this)">30s</button>
+        <button class="tf-btn"        id="tf60"  onclick="setTF(60,this)">1d</button>
+        <button class="tf-btn"        id="tf300" onclick="setTF(300,this)">5d</button>
+      </div>
+    </div>
+    <div class="chart-wrap" id="chartWrap">
+      <canvas id="priceCanvas" style="flex:1;min-height:0"></canvas>
+      <canvas id="volCanvas"   height="36"></canvas>
+    </div>
+
+    <div class="ph" style="flex-shrink:0">Son İşlemler</div>
+    <div class="trade-hdr">
+      <span>Saat</span><span></span><span>Fiyat</span><span>Miktar</span><span>Alıcı ← Satıcı</span>
+    </div>
+    <div class="trades-list" id="tradesFeed"></div>
+
+  </div>
+
+  <!-- RIGHT: Order form + Portfolio + Orders -->
+  <div class="panel right-panel">
+    <div class="ph">Emir Ver</div>
+    <div class="order-form">
+      <div class="side-tabs">
+        <div class="side-tab buy active" id="tabBuy"  onclick="setSide('buy')">AL</div>
+        <div class="side-tab sell"       id="tabSell" onclick="setSide('sell')">SAT</div>
+      </div>
+      <div class="form-row">
+        <label>Emir Tipi</label>
+        <div class="type-toggle">
+          <div class="type-btn active" id="typeLimit"  onclick="setType('limit')">LİMİT</div>
+          <div class="type-btn"        id="typeMarket" onclick="setType('market')">MARKET</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Miktar (lot)</label>
+        <input type="number" id="orderQty" placeholder="10" min="1" oninput="updateCost()" />
+      </div>
+      <div class="form-row" id="priceRow">
+        <label>Fiyat (% nominal)</label>
+        <input type="number" id="orderPrice" placeholder="98.50" step="0.01" oninput="updateCost()" />
+      </div>
+      <div class="order-cost" id="orderCost"></div>
+      <button class="submit-btn buy" id="submitBtn" onclick="placeOrder()">AL</button>
+    </div>
+
+    <div class="ph" style="flex-shrink:0">
+      Portföy
+      <button class="btn-ghost" style="font-size:9px;padding:1px 6px" onclick="refreshPortfolio()">↻</button>
+    </div>
+    <div class="portfolio-body" id="portfolioBody"><div class="empty">Kullanıcı seçin</div></div>
+
+    <div class="ph" style="flex-shrink:0">Emirlerim</div>
+    <div class="orders-body" id="ordersBody"><div class="empty">Kullanıcı seçin</div></div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <div class="live-dot" style="width:6px;height:6px"></div>
+  <span id="statusBar">Bağlanıyor...</span>
+  <span style="margin-left:auto" id="clockEl"></span>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="modal-overlay" id="modalOverlay" style="display:none" onclick="closeModalOverlay(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<script>
+const API = '';
+
+// ── State ──
+let bonds        = [];
+let selectedIsin = null;
+let selectedSide = 'buy';
+let selectedType = 'limit';
+let currentUserId = null;
+let lastTradeId   = null;
+let allTrades     = [];
+let tfSeconds     = 10;
+
+// ── Bootstrap ──
+async function init() {
+  updateClock();
+  setInterval(updateClock, 1000);
+  await loadBonds();
+  setInterval(tick, 2000);
+}
+
+function updateClock() {
+  document.getElementById('clockEl').textContent =
+    new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+
+// ── Bonds ──
+async function loadBonds() {
+  const r = await fetch(`${API}/bonds`).catch(() => null);
+  if (!r || !r.ok) { setStatus('API bağlantısı yok', true); return; }
+  bonds = await r.json();
+  renderBondTabs();
+  if (bonds.length) selectBond(bonds[0].isin);
+  setStatus('Bağlı');
+}
+
+function renderBondTabs() {
+  document.getElementById('bondTabs').innerHTML = bonds.map(b => `
+    <div class="bond-tab ${b.isin === selectedIsin ? 'active' : ''}" onclick="selectBond('${b.isin}')">
+      ${b.issuer.split(' ').slice(0, 2).join(' ')}
+      <span class="coupon">%${b.coupon_rate.toFixed(2)}</span>
+      <span class="currency">${b.currency}</span>
+    </div>
+  `).join('');
+}
+
+function selectBond(isin) {
+  selectedIsin = isin;
+  allTrades    = [];
+  lastTradeId  = null;
+  renderBondTabs();
+  const b = bonds.find(x => x.isin === isin);
+  if (b) {
+    document.getElementById('obIsin').textContent         = isin;
+    document.getElementById('tickerIssuer').textContent   = b.issuer;
+    document.getElementById('tickerMaturity').textContent = b.maturity_date;
+    document.getElementById('tickerCoupon').textContent   = `%${b.coupon_rate.toFixed(3)}`;
+    document.getElementById('tickerCurrency').textContent = b.currency;
+  }
+  tick();
+}
+
+// ── Tick ──
+async function tick() {
+  if (!selectedIsin) return;
+  const [ob, trades] = await Promise.all([
+    fetch(`${API}/bonds/${selectedIsin}/orderbook?depth=14`).then(r => r.json()).catch(() => null),
+    fetch(`${API}/bonds/${selectedIsin}/trades?limit=200`).then(r => r.json()).catch(() => null),
+  ]);
+  if (ob)     renderOrderBook(ob);
+  if (trades) renderTrades(trades);
+  if (currentUserId) { refreshPortfolio(); refreshOrders(); }
+}
+
+// ── YTM Hesaplama (Newton-Raphson) ──
+// YTM — USD Eurobond: 30/360 day count, semi-annual kupon, BEY
+// cleanPrice : clean price (% of face, ör: 98.50)
+// couponPct  : yıllık kupon oranı (%, ör: 7.625)
+// maturityStr: "YYYY-MM-DD"
+function calcYTM(cleanPrice, couponPct, maturityStr) {
+  // 30/360 gün sayısı (Bond Basis / ISMA 30/360)
+  function d360(y1, m1, d1, y2, m2, d2) {
+    if (d1 === 31) d1 = 30;
+    if (d2 === 31 && d1 === 30) d2 = 30;
+    return 360 * (y2 - y1) + 30 * (m2 - m1) + (d2 - d1);
+  }
+  function dateToYMD(dt) {
+    return [dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate()];
+  }
+
+  // T+0 settlement — UTC ile çalış, timezone kayması olmasın
+  const now = new Date();
+  const settle = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const [sy, sm, sd] = dateToYMD(settle);
+
+  const [my, mm, md] = maturityStr.split('-').map(Number);
+  if (d360(sy, sm, sd, my, mm, md) <= 0) return null;
+
+  // Kupon tarihlerini vadeden geriye doğru üret (6'şar ay)
+  const couponDates = [];
+  let cy = my, cm = mm, cd = md;
+  while (d360(sy, sm, sd, cy, cm, cd) > 0) {
+    couponDates.unshift([cy, cm, cd]);
+    cm -= 6;
+    if (cm <= 0) { cm += 12; cy -= 1; }
+  }
+  if (!couponDates.length) return null;
+
+  // Son geçmiş kupon
+  const [ly, lm, ld] = [cy, cm, cd];
+  const [ny, nm, nd] = couponDates[0]; // ilk gelecek kupon
+
+  const semiCoupon  = couponPct / 100 / 2;
+  const periodDays  = d360(ly, lm, ld, ny, nm, nd); // her zaman 180
+  const accruedDays = d360(ly, lm, ld, sy, sm, sd);
+  const ai          = semiCoupon * (accruedDays / periodDays);
+  const dirtyPrice  = cleanPrice / 100 + ai;
+
+  // Nakit akışları — dönem cinsinden süre
+  const cfs = couponDates.map(([fy, fm, fd], i) => ({
+    t : d360(sy, sm, sd, fy, fm, fd) / periodDays,
+    cf: i === couponDates.length - 1 ? semiCoupon + 1 : semiCoupon,
+  }));
+
+  function pv(r) {
+    return cfs.reduce((s, { t, cf }) => s + cf / Math.pow(1 + r, t), 0) - dirtyPrice;
+  }
+
+  // Newton-Raphson
+  let r = semiCoupon;
+  for (let i = 0; i < 300; i++) {
+    const f  = pv(r);
+    const df = (pv(r + 1e-8) - f) / 1e-8;
+    if (Math.abs(df) < 1e-15) break;
+    const rNew = r - f / df;
+    if (Math.abs(rNew - r) < 1e-10) { r = rNew; break; }
+    r = Math.max(rNew, -0.5);
+  }
+
+  const bey = r * 2 * 100;
+  return isFinite(bey) ? bey.toFixed(3) + '%' : null;
+}
+
+// ── Order Book ──
+function renderOrderBook(ob) {
+  document.getElementById('spreadVal').textContent  = ob.spread   || '—';
+  document.getElementById('bestBidVal').textContent = ob.best_bid || '—';
+  document.getElementById('bestAskVal').textContent = ob.best_ask || '—';
+
+  // Seçili tahvilin bilgileri
+  const bond = bonds.find(x => x.isin === selectedIsin);
+  const coupon   = bond ? bond.coupon_rate   : 0;
+  const maturity = bond ? bond.maturity_date : null;
+
+  function yieldStr(priceStr) {
+    if (!maturity || !priceStr) return '—';
+    const y = calcYTM(parseFloat(priceStr), coupon, maturity);
+    return y || '—';
+  }
+
+  // Bid/Ask/Mid verimleri
+  document.getElementById('bidYieldVal').textContent = yieldStr(ob.best_bid);
+  document.getElementById('askYieldVal').textContent = yieldStr(ob.best_ask);
+  if (ob.best_bid && ob.best_ask) {
+    const mid = (parseFloat(ob.best_bid) + parseFloat(ob.best_ask)) / 2;
+    document.getElementById('midYieldVal').textContent = yieldStr(mid.toString());
+  } else {
+    document.getElementById('midYieldVal').textContent = '—';
+  }
+
+  const maxQty = Math.max(...ob.bids.map(x => x.quantity), ...ob.asks.map(x => x.quantity), 1);
+
+  function obRow(price, qty, cls) {
+    const pct   = (qty / maxQty * 100).toFixed(1);
+    const total = Number((parseFloat(price) * qty).toFixed(0)).toLocaleString();
+    const ytm   = yieldStr(price);
+    return `<div class="ob-row">
+      <div class="ob-bar ${cls}" style="width:${pct}%"></div>
+      <span class="price-${cls}">${parseFloat(price).toFixed(3)}</span>
+      <span class="ob-qty">${qty}</span>
+      <span class="ob-total">${total}</span>
+      <span class="ob-yield">${ytm}</span>
+    </div>`;
+  }
+
+  // Asks: yüksek fiyat üstte → en düşük fiyat spread'e yakın (altta)
+  document.getElementById('asksContainer').innerHTML =
+    ob.asks.slice().reverse().map(a => obRow(a.price, a.quantity, 'ask')).join('');
+
+  // Bids: yüksek fiyat üstte → en yüksek fiyat spread'e yakın
+  document.getElementById('bidsContainer').innerHTML =
+    ob.bids.map(b => obRow(b.price, b.quantity, 'bid')).join('');
+}
+
+// ── Trades ──
+function renderTrades(trades) {
+  const el = document.getElementById('tradesFeed');
+  if (!trades.length) {
+    el.innerHTML = '<div class="empty">Henüz işlem yok</div>';
+    drawPriceVolChart();
+    return;
+  }
+
+  allTrades = trades;
+  drawPriceVolChart();
+
+  // Son işlem fiyatını ticker'a yansıt
+  const sorted = [...trades].reverse();
+  const lastPrice = parseFloat(sorted[0].price);
+  const prevPrice = sorted.length > 1 ? parseFloat(sorted[1].price) : lastPrice;
+  const diff      = lastPrice - prevPrice;
+
+  document.getElementById('tickerPrice').textContent = lastPrice.toFixed(3);
+  const ce = document.getElementById('tickerChange');
+  ce.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(3);
+  ce.className   = 'ticker-change ' + (diff >= 0 ? 'up' : 'down');
+
+  el.innerHTML = sorted.map((t, i) => {
+    const time     = new Date(t.executed_at + 'Z').toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    const curP     = parseFloat(t.price);
+    const prevP    = i < sorted.length - 1 ? parseFloat(sorted[i + 1].price) : curP;
+    const isUp     = curP >= prevP;
+    const dirCls   = isUp ? 'dir-buy'   : 'dir-sell';
+    const priceCls = isUp ? 'price-buy' : 'price-sell';
+    const dirLbl   = isUp ? 'AL'        : 'SAT';
+    return `<div class="trade-row">
+      <span class="trade-time">${time}</span>
+      <span class="trade-dir ${dirCls}">${dirLbl}</span>
+      <span class="${priceCls}">${curP.toFixed(3)}</span>
+      <span class="trade-qty">${t.quantity}</span>
+      <span class="trade-parties">${t.buyer_id.slice(0,6)} ← ${t.seller_id.slice(0,6)}</span>
+    </div>`;
+  }).join('');
+  lastTradeId = sorted[0].id;
+}
+
+// ── Price-Volume Chart ──
+function setTF(sec, btn) {
+  tfSeconds = sec;
+  document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  drawPriceVolChart();
+}
+
+function buildCandles(trades, bucketSec) {
+  if (!trades.length) return [];
+  const map = {};
+  trades.forEach(t => {
+    const ts  = new Date(t.executed_at + 'Z').getTime();
+    const key = Math.floor(ts / (bucketSec * 1000)) * bucketSec * 1000;
+    const p   = parseFloat(t.price);
+    if (!map[key]) map[key] = { t: key, o: p, h: p, l: p, c: p, v: 0 };
+    const c = map[key];
+    c.h = Math.max(c.h, p); c.l = Math.min(c.l, p); c.c = p; c.v += t.quantity;
+  });
+  return Object.values(map).sort((a, b) => a.t - b.t);
+}
+
+function drawPriceVolChart() {
+  const wrap = document.getElementById('chartWrap');
+  const pc   = document.getElementById('priceCanvas');
+  const vc   = document.getElementById('volCanvas');
+  if (!wrap || !pc || !vc) return;
+
+  const W  = wrap.clientWidth  || 400;
+  const PH = Math.max((wrap.clientHeight || 200) - 40, 80);
+  const VH = 36;
+
+  pc.width  = W; pc.height = PH;
+  vc.width  = W; vc.height = VH;
+
+  const pCtx = pc.getContext('2d');
+  const vCtx = vc.getContext('2d');
+  pCtx.clearRect(0, 0, W, PH);
+  vCtx.clearRect(0, 0, W, VH);
+
+  const candles = buildCandles(allTrades, tfSeconds);
+
+  if (candles.length < 1) {
+    pCtx.fillStyle  = '#7d8590';
+    pCtx.font       = '11px monospace';
+    pCtx.textAlign  = 'center';
+    pCtx.textBaseline = 'middle';
+    pCtx.fillText('İşlem bekleniyor...', W / 2, PH / 2);
+    return;
+  }
+
+  const N     = Math.min(candles.length, 80);
+  const slice = candles.slice(-N);
+
+  const prices = slice.flatMap(c => [c.h, c.l]);
+  const minP   = Math.min(...prices);
+  const maxP   = Math.max(...prices);
+  const padP   = (maxP - minP) * 0.12 || 0.05;
+  const maxV   = Math.max(...slice.map(c => c.v), 1);
+
+  const PL = 54, PR = 6, PT = 10, PB = 20;
+  const cW = W - PL - PR;
+  const cH = PH - PT - PB;
+
+  const xOf = i  => PL + (i + 0.5) * (cW / N);
+  const yOf = p  => PT + (1 - (p - minP + padP) / (maxP - minP + 2 * padP)) * cH;
+  const yVol = v => VH - Math.max((v / maxV) * (VH - 4), 1);
+
+  // Grid
+  pCtx.strokeStyle = 'rgba(33,38,45,0.9)';
+  pCtx.lineWidth   = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y   = PT + (i / 4) * cH;
+    const val = (maxP + padP) - (i / 4) * (maxP - minP + 2 * padP);
+    pCtx.beginPath(); pCtx.moveTo(PL, y); pCtx.lineTo(W - PR, y); pCtx.stroke();
+    pCtx.fillStyle  = '#7d8590';
+    pCtx.font       = '9px monospace';
+    pCtx.textAlign  = 'right';
+    pCtx.textBaseline = 'middle';
+    pCtx.fillText(val.toFixed(3), PL - 4, y);
+  }
+
+  // X labels
+  const step = Math.max(1, Math.floor(N / 6));
+  pCtx.fillStyle = '#7d8590';
+  pCtx.font      = '8px monospace';
+  pCtx.textAlign = 'center';
+  pCtx.textBaseline = 'top';
+  slice.forEach((c, i) => {
+    if (i % step !== 0) return;
+    const lbl = new Date(c.t).toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    pCtx.fillText(lbl, xOf(i), PH - PB + 3);
+  });
+
+  // Candles
+  const bw = Math.max(2, (cW / N) * 0.55);
+  slice.forEach((c, i) => {
+    const x    = xOf(i);
+    const bull = c.c >= c.o;
+    const col  = bull ? '#3fb950' : '#f85149';
+
+    // Wick
+    pCtx.strokeStyle = col; pCtx.lineWidth = 1;
+    pCtx.beginPath(); pCtx.moveTo(x, yOf(c.h)); pCtx.lineTo(x, yOf(c.l)); pCtx.stroke();
+
+    // Body
+    const y1 = yOf(Math.max(c.o, c.c));
+    const y2 = yOf(Math.min(c.o, c.c));
+    pCtx.fillStyle = col;
+    pCtx.fillRect(x - bw / 2, y1, bw, Math.max(y2 - y1, 1));
+
+    // Volume
+    vCtx.fillStyle = bull ? 'rgba(63,185,80,.45)' : 'rgba(248,81,73,.45)';
+    vCtx.fillRect(x - bw / 2, yVol(c.v), bw, VH - yVol(c.v));
+  });
+
+  // Last price dashed line
+  const last  = slice[slice.length - 1];
+  const lastY = yOf(last.c);
+  const col2  = last.c >= last.o ? '#3fb950' : '#f85149';
+  pCtx.setLineDash([3, 3]);
+  pCtx.strokeStyle = col2; pCtx.lineWidth = 1;
+  pCtx.beginPath(); pCtx.moveTo(PL, lastY); pCtx.lineTo(W - PR, lastY); pCtx.stroke();
+  pCtx.setLineDash([]);
+
+  // Last price label (right side)
+  pCtx.fillStyle    = col2;
+  pCtx.font         = 'bold 9px monospace';
+  pCtx.textAlign    = 'left';
+  pCtx.textBaseline = 'middle';
+  pCtx.fillStyle    = '#0d1117';
+  pCtx.fillRect(W - PR - 46, lastY - 7, 46, 14);
+  pCtx.fillStyle = col2;
+  pCtx.fillText(last.c.toFixed(3), W - PR - 44, lastY);
+}
+
+// ── Order Form ──
+function setSide(side) {
+  selectedSide = side;
+  document.getElementById('tabBuy').classList.toggle('active', side === 'buy');
+  document.getElementById('tabSell').classList.toggle('active', side === 'sell');
+  const btn = document.getElementById('submitBtn');
+  btn.className   = `submit-btn ${side}`;
+  btn.textContent = side === 'buy' ? 'AL' : 'SAT';
+  updateCost();
+}
+
+function setType(type) {
+  selectedType = type;
+  document.getElementById('typeLimit').classList.toggle('active', type === 'limit');
+  document.getElementById('typeMarket').classList.toggle('active', type === 'market');
+  document.getElementById('priceRow').style.display = type === 'limit' ? '' : 'none';
+  updateCost();
+}
+
+function updateCost() {
+  const qty   = parseFloat(document.getElementById('orderQty').value) || 0;
+  const price = parseFloat(document.getElementById('orderPrice').value) || 0;
+  const el    = document.getElementById('orderCost');
+  el.textContent = (selectedType === 'limit' && qty && price)
+    ? `Tahmini: ${(qty * price).toLocaleString('tr-TR', {minimumFractionDigits: 2})} (% × lot)`
+    : '';
+}
+
+async function placeOrder() {
+  if (!currentUserId)           { toast('Önce kullanıcı seçin', 'error'); return; }
+  if (!selectedIsin)            { toast('Tahvil seçin', 'error'); return; }
+  const qty   = parseInt(document.getElementById('orderQty').value);
+  const price = parseFloat(document.getElementById('orderPrice').value);
+  if (!qty || qty < 1)                                       { toast('Geçerli miktar girin', 'error'); return; }
+  if (selectedType === 'limit' && (!price || price <= 0))    { toast('Geçerli fiyat girin', 'error'); return; }
+
+  const body = { bond_isin: selectedIsin, side: selectedSide, order_type: selectedType, quantity: qty };
+  if (selectedType === 'limit') body.price = price.toString();
+
+  const r    = await fetch(`${API}/users/${currentUserId}/orders`, {
+    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body),
+  });
+  const data = await r.json();
+  if (!r.ok) { toast(data.detail || 'Hata', 'error'); return; }
+
+  const { trades } = data;
+  const lbl = selectedSide === 'buy' ? 'Alış' : 'Satış';
+  toast(trades.length
+    ? `✅ ${trades.length} işlem gerçekleşti! ${lbl} ${qty} lot @ ${trades[0].price}`
+    : `📋 ${lbl} emri order book'a eklendi`, 'success');
+  tick();
+}
+
+// ── Portfolio ──
+async function refreshPortfolio() {
+  if (!currentUserId) return;
+  const r = await fetch(`${API}/users/${currentUserId}/portfolio`).catch(() => null);
+  if (!r || !r.ok) return;
+  const p  = await r.json();
+  const el = document.getElementById('portfolioBody');
+  const holdings = Object.entries(p.holdings || {}).filter(([, v]) => v > 0);
+  el.innerHTML =
+    `<div class="port-row"><span class="port-lbl">Nakit</span><span class="port-val">${Number(p.cash_balance).toLocaleString('tr-TR', {minimumFractionDigits:2})} $</span></div>
+     <div class="port-row"><span class="port-lbl">Rezerve Nakit</span><span class="port-val" style="color:var(--yellow)">${Number(p.reserved_cash).toLocaleString('tr-TR', {minimumFractionDigits:2})} $</span></div>
+     ${holdings.length ? '<div class="port-row" style="color:var(--muted);font-size:10px">TAHVİLLER</div>' : ''}
+     ${holdings.map(([isin, qty]) => {
+       const b = bonds.find(x => x.isin === isin);
+       return `<div class="hold-row"><span class="hold-isin">${b ? b.issuer.split(' ').slice(0,2).join(' ') : isin.slice(0,12)}</span><span class="hold-qty">${qty} lot</span></div>`;
+     }).join('')}
+     ${!holdings.length ? '<div class="empty">Tahvil yok</div>' : ''}`;
+}
+
+async function refreshOrders() {
+  if (!currentUserId) return;
+  const r = await fetch(`${API}/users/${currentUserId}/orders`).catch(() => null);
+  if (!r || !r.ok) return;
+  const orders = await r.json();
+  const el     = document.getElementById('ordersBody');
+  const active = orders.filter(o => o.status === 'pending' || o.status === 'partial');
+  const hist   = orders.filter(o => o.status !== 'pending' && o.status !== 'partial').slice(-5);
+  const all    = [...active, ...hist];
+  if (!all.length) { el.innerHTML = '<div class="empty">Emir yok</div>'; return; }
+  el.innerHTML = all.map(o => {
+    const b   = bonds.find(x => x.isin === o.bond_isin);
+    const lbl = b ? b.issuer.split(' ').slice(0,2).join(' ') : o.bond_isin;
+    const can = o.status === 'pending' || o.status === 'partial';
+    return `<div class="order-item">
+      <div class="order-top">
+        <span class="${o.side === 'buy' ? 'os-buy' : 'os-sell'}">${o.side === 'buy' ? 'AL' : 'SAT'} ${lbl}</span>
+        <span class="o-status s-${o.status}">${o.status}</span>
+      </div>
+      <div class="order-bot">
+        <span>${o.filled_quantity}/${o.quantity} lot ${o.price ? '@ ' + parseFloat(o.price).toFixed(3) : '(market)'}</span>
+        ${can ? `<button class="cancel-btn" onclick="cancelOrder('${o.id}')">İptal</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function cancelOrder(orderId) {
+  const r = await fetch(`${API}/users/${currentUserId}/orders/${orderId}`, { method: 'DELETE' });
+  if (r.ok) { toast('Emir iptal edildi', 'success'); tick(); }
+  else { const d = await r.json(); toast(d.detail || 'Hata', 'error'); }
+}
+
+// ── User management ──
+function onUserChange() {
+  currentUserId = document.getElementById('userSelect').value || null;
+  if (currentUserId) { refreshPortfolio(); refreshOrders(); }
+  else {
+    document.getElementById('portfolioBody').innerHTML = '<div class="empty">Kullanıcı seçin</div>';
+    document.getElementById('ordersBody').innerHTML    = '<div class="empty">Kullanıcı seçin</div>';
+  }
+}
+
+function addUserToSelect(user) {
+  const sel = document.getElementById('userSelect');
+  const opt = document.createElement('option');
+  opt.value = user.id;
+  opt.textContent = `${user.name} (${Number(user.cash_balance).toLocaleString()} $)`;
+  sel.appendChild(opt);
+  sel.value     = user.id;
+  currentUserId = user.id;
+  onUserChange();
+}
+
+// ── Modals ──
+function showCreateUserModal() {
+  openModal('Yeni Kullanıcı', `
+    <div class="form-row"><label>Ad Soyad</label><input id="mName" placeholder="Ali Yılmaz" /></div>
+    <div class="form-row"><label>Başlangıç Nakiti ($)</label><input id="mCash" type="number" value="1000000" /></div>
+  `, async () => {
+    const name = document.getElementById('mName').value.trim();
+    const cash = document.getElementById('mCash').value;
+    if (!name) { toast('Ad gerekli', 'error'); return; }
+    const r = await fetch(`${API}/users`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name, initial_cash: cash}) });
+    if (!r.ok) { toast('Hata', 'error'); return; }
+    addUserToSelect(await r.json());
+    toast(`✅ ${name} oluşturuldu`, 'success');
+    closeModalDirect();
+  });
+}
+
+function showDepositModal() {
+  if (!currentUserId) { toast('Kullanıcı seçin', 'error'); return; }
+  openModal('Para Yatır', `
+    <div class="form-row"><label>Miktar ($)</label><input id="mAmount" type="number" placeholder="100000" /></div>
+  `, async () => {
+    const amount = document.getElementById('mAmount').value;
+    const r = await fetch(`${API}/users/${currentUserId}/deposit-cash`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({amount}) });
+    if (!r.ok) { toast('Hata', 'error'); return; }
+    toast('💰 Nakit yatırıldı', 'success');
+    refreshPortfolio();
+    closeModalDirect();
+  });
+}
+
+function showDepositBondModal() {
+  if (!currentUserId) { toast('Kullanıcı seçin', 'error'); return; }
+  openModal('Tahvil Yatır', `
+    <div class="form-row"><label>Tahvil</label>
+      <select class="fs" id="mBondIsin">${bonds.map(b => `<option value="${b.isin}">${b.issuer} (${b.isin})</option>`).join('')}</select>
+    </div>
+    <div class="form-row"><label>Miktar (lot)</label><input id="mBondQty" type="number" placeholder="50" /></div>
+  `, async () => {
+    const bond_isin = document.getElementById('mBondIsin').value;
+    const quantity  = parseInt(document.getElementById('mBondQty').value);
+    const r = await fetch(`${API}/users/${currentUserId}/deposit-bonds`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({bond_isin, quantity}) });
+    if (!r.ok) { toast('Hata', 'error'); return; }
+    toast('📦 Tahvil yatırıldı', 'success');
+    refreshPortfolio();
+    closeModalDirect();
+  });
+}
+
+function openModal(title, bodyHtml, onConfirm) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML    = bodyHtml;
+  document.getElementById('modalActions').innerHTML =
+    `<button class="btn-ghost" onclick="closeModalDirect()">İptal</button>
+     <button class="btn-primary" onclick="window._mConfirm()">Onayla</button>`;
+  window._mConfirm = onConfirm;
+  document.getElementById('modalOverlay').style.display = 'flex';
+}
+function closeModalOverlay(e) { if (e.target === document.getElementById('modalOverlay')) closeModalDirect(); }
+function closeModalDirect()   { document.getElementById('modalOverlay').style.display = 'none'; }
+
+// ── Toast ──
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className   = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function setStatus(msg, err = false) {
+  const el  = document.getElementById('statusBar');
+  el.textContent = msg;
+  el.style.color = err ? 'var(--red)' : 'var(--muted)';
+}
+
+init();
+</script>
+</body>
+</html>
