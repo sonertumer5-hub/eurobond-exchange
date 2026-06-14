@@ -7,8 +7,12 @@ Başlatmak için:
 
 Dokümantasyon: http://localhost:8000/docs
 """
+from contextlib import asynccontextmanager
 from decimal import Decimal, InvalidOperation
 from typing import List, Optional
+import random
+import threading
+import time
 
 from fastapi import FastAPI, HTTPException, Path, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,10 +22,112 @@ from pydantic import BaseModel, field_validator
 from exchange import Exchange
 from models import OrderSide, OrderType, OrderStatus
 
+exchange = Exchange()
+
+# ── Market Maker (background thread) ─────────────────────────────────────────
+
+ISIN = "US900123CT57"
+MID  = 98.625
+
+def _mm_setup():
+    traders = []
+    names = ["Alpha Fund", "Beta Capital", "Gamma Trading", "Delta AM", "Omega Bank"]
+    for name in names:
+        user = exchange.create_user(name, Decimal("999999999"))
+        exchange.deposit_bonds(user.id, ISIN, 99999)
+        traders.append(user.id)
+    return traders
+
+def _mm_pending(user_id):
+    return [o for o in exchange.get_user_orders(user_id)
+            if o.status in (OrderStatus.PENDING, OrderStatus.PARTIAL)]
+
+def _mm_cycle(traders):
+    try:
+        ob = exchange.get_order_book(ISIN, 20)
+        best_bid = float(ob["best_bid"]) if ob["best_bid"] else MID - 0.5
+        best_ask = float(ob["best_ask"]) if ob["best_ask"] else MID + 0.5
+
+        # İptal
+        for uid in random.sample(traders, min(random.randint(3, 6), len(traders))):
+            orders = _mm_pending(uid)
+            if orders:
+                victim = random.choice(orders)
+                try:
+                    exchange.cancel_order(uid, victim.id)
+                except Exception:
+                    pass
+
+        # Pasif limitler
+        for _ in range(random.randint(4, 7)):
+            uid = random.choice(traders)
+            side = random.choice(["buy", "sell"])
+            qty  = random.randint(5, 150)
+            if side == "buy":
+                price = Decimal(str(round(max(best_bid - random.uniform(0.05, 0.80), 90.0), 2)))
+            else:
+                price = Decimal(str(round(min(best_ask + random.uniform(0.05, 0.80), 110.0), 2)))
+            try:
+                exchange.place_order(uid, ISIN, OrderSide(side), OrderType.LIMIT, qty, price)
+            except Exception:
+                pass
+
+        # OB güncelle
+        ob = exchange.get_order_book(ISIN, 20)
+        best_bid = float(ob["best_bid"]) if ob["best_bid"] else MID - 0.5
+        best_ask = float(ob["best_ask"]) if ob["best_ask"] else MID + 0.5
+
+        # Agresif limit (%50)
+        if random.random() < 0.50:
+            uid  = random.choice(traders)
+            qty  = random.randint(10, 80)
+            side = random.choice(["buy", "sell"])
+            if side == "buy" and ob["asks"]:
+                price = Decimal(str(round(best_ask + random.uniform(0.0, 0.30), 2)))
+                try:
+                    exchange.place_order(uid, ISIN, OrderSide.BUY, OrderType.LIMIT, qty, price)
+                except Exception:
+                    pass
+            elif side == "sell" and ob["bids"]:
+                price = Decimal(str(round(best_bid - random.uniform(0.0, 0.30), 2)))
+                try:
+                    exchange.place_order(uid, ISIN, OrderSide.SELL, OrderType.LIMIT, qty, price)
+                except Exception:
+                    pass
+
+        # Market emir (%25)
+        if random.random() < 0.25:
+            uid  = random.choice(traders)
+            qty  = random.randint(5, 40)
+            side = random.choice(["buy", "sell"])
+            if (side == "buy" and ob["asks"]) or (side == "sell" and ob["bids"]):
+                try:
+                    exchange.place_order(uid, ISIN, OrderSide(side), OrderType.MARKET, qty)
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+def _mm_run():
+    time.sleep(5)
+    traders = _mm_setup()
+    while True:
+        _mm_cycle(traders)
+        time.sleep(3)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    t = threading.Thread(target=_mm_run, daemon=True)
+    t.start()
+    yield
+
+# ── App ───────────────────────────────────────────────────────────────────────
+
 app = FastAPI(
     title="Eurobond Exchange API",
     description="Kullanıcılar arası karşılıklı eurobond alım-satım platformu (order book tabanlı)",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -30,8 +136,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-exchange = Exchange()
 
 
 # ===========================================================================
