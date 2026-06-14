@@ -965,32 +965,29 @@ init();
 
 <!-- ── Disclaimer Modal ── -->
 <div id="disclaimerOverlay" style="
-  display:none; position:fixed; inset:0; background:rgba(0,0,0,.75);
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,.80);
   z-index:9999; align-items:center; justify-content:center; padding:20px;
 ">
   <div style="
     background:#161b22; border:1px solid #30363d; border-radius:12px;
-    max-width:540px; width:100%; padding:32px; font-family:'SF Mono','Fira Code',monospace;
+    max-width:560px; width:100%; padding:36px; font-family:'SF Mono','Fira Code',monospace;
   ">
-    <div style="font-size:11px;color:#58a6ff;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;font-weight:700">
-      ⚠ Yasal Uyarı / Disclaimer
+    <div style="font-size:11px;color:#58a6ff;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;font-weight:700">
+      Risk Bildirimi
     </div>
-    <div style="font-size:13px;color:#e6edf3;line-height:1.7;margin-bottom:20px">
-      Bu platform yalnızca <strong>eğitim ve demonstrasyon</strong> amaçlıdır.
-      Gerçek bir finansal işlem platformu değildir.
+    <div style="font-size:13px;color:#e6edf3;line-height:1.8;margin-bottom:16px">
+      Bu platformda yer alan bilgiler ve analizler yalnızca <strong>bilgilendirme amaçlıdır</strong>; yatırım danışmanlığı, portföy yöneticiliği veya aracılık hizmeti niteliği taşımaz.
     </div>
-    <ul style="font-size:12px;color:#8b949e;line-height:2;margin-bottom:24px;padding-left:18px">
-      <li>Gösterilen fiyatlar ve işlemler tamamen <strong style="color:#e6edf3">simüle edilmiştir</strong>.</li>
-      <li>Gerçek piyasa verilerini yansıtmaz, yatırım tavsiyesi niteliği taşımaz.</li>
-      <li>Sermaye piyasası araçlarına yatırım <strong style="color:#f85149">risk içerir</strong>; anapara kaybı yaşanabilir.</li>
-    </ul>
+    <div style="font-size:12px;color:#8b949e;line-height:1.9;margin-bottom:24px">
+      Eurobond ve diğer sabit getirili menkul kıymetlere yapılan yatırımlar faiz oranı riski, kur riski, kredi riski ve likidite riski dahil çeşitli riskler içermektedir. Geçmiş getiriler gelecekteki performansın güvencesi değildir. Yatırım kararlarınızı vermeden önce kendi risk profilinizi ve finansal durumunuzu değerlendirmenizi tavsiye ederiz.
+    </div>
     <div style="display:flex;gap:10px">
       <button onclick="acceptDisclaimer()" style="
-        flex:1; padding:10px; background:#1f6feb; color:#fff; border:none;
+        flex:1; padding:11px; background:#1f6feb; color:#fff; border:none;
         border-radius:8px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer;
-      ">Anladım, Devam Et</button>
+      ">Okudum, Anladım</button>
       <a href="https://www.google.com" style="
-        flex:0; padding:10px 16px; border:1px solid #30363d; color:#8b949e;
+        flex:0; padding:11px 18px; border:1px solid #30363d; color:#8b949e;
         border-radius:8px; font-size:12px; text-decoration:none; display:flex; align-items:center;
       ">Çıkış</a>
     </div>
@@ -1010,7 +1007,7 @@ function acceptDisclaimer() {
 </script>
 
 <footer style="text-align:center;padding:14px;font-size:10px;color:#484f58;font-family:'SF Mono','Fira Code',monospace;border-top:1px solid #21262d;flex-shrink:0">
-  Bu platform yalnızca eğitim amaçlıdır · Yatırım tavsiyesi değildir ·
+  © 2025 eurobondlar.com · Tüm hakları saklıdır ·
   <a href="mailto:info@eurobondlar.com" style="color:#58a6ff;text-decoration:none">info@eurobondlar.com</a>
 </footer>
 </body>
