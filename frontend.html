@@ -245,6 +245,59 @@ input:focus, select.fs:focus { border-color: var(--accent); }
 .empty { padding: 18px; text-align: center; color: var(--muted); font-size: 11px; }
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Mobile tab bar (always in DOM, hidden on desktop) ── */
+.mob-tabbar { display: none; }
+.mob-tab {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 9px; font-weight: 700; gap: 3px; cursor: pointer;
+  text-transform: uppercase; letter-spacing: .06em; transition: color .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mob-tab.active { color: var(--blue); }
+.mob-tab svg { display: block; }
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  body { overflow: hidden; }
+
+  header { padding: 0 10px; gap: 8px; height: 44px; }
+  header svg { width: 28px; height: 28px; }
+  .logo { font-size: 13px; }
+  .hide-mob { display: none !important; }
+  select.user-select { max-width: 130px; font-size: 10px; }
+
+  .bond-tabs { -webkit-overflow-scrolling: touch; }
+  .bond-tab { padding: 7px 9px; font-size: 10px; }
+  .bond-tab .currency { display: none; }
+
+  .main {
+    grid-template-columns: 1fr;
+    gap: 0;
+    background: var(--bg);
+  }
+  .panel { display: none !important; }
+  .panel.mob-active { display: flex !important; }
+
+  .ticker-bar { padding: 8px 12px; flex-wrap: wrap; gap: 6px; }
+  .ticker-price { font-size: 22px; }
+  .ticker-meta { gap: 10px; }
+  .ticker-stat-lbl { font-size: 9px; }
+  .ticker-stat-val { font-size: 11px; }
+
+  .chart-wrap { padding: 4px 8px; }
+
+  .bottom-bar { display: none; }
+  footer { display: none; }
+
+  .mob-tabbar {
+    display: flex;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    height: 52px;
+    flex-shrink: 0;
+  }
+}
 </style>
 </head>
 <body>
@@ -265,10 +318,10 @@ input:focus, select.fs:focus { border-color: var(--accent); }
     <option value="">— Kullanıcı seç —</option>
   </select>
   <div class="ml-auto">
-    <a href="/calculator" style="color:var(--muted);text-decoration:none;font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;margin-right:4px;">Hesap Makinası</a>
+    <a href="/calculator" class="hide-mob" style="color:var(--muted);text-decoration:none;font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;margin-right:4px;">Hesap Makinası</a>
     <button class="btn-primary" onclick="showCreateUserModal()">+ Kullanıcı</button>
-    <button class="btn-ghost" onclick="showDepositModal()">Para Yatır</button>
-    <button class="btn-ghost" onclick="showDepositBondModal()">Tahvil Yatır</button>
+    <button class="btn-ghost hide-mob" onclick="showDepositModal()">Para Yatır</button>
+    <button class="btn-ghost hide-mob" onclick="showDepositBondModal()">Tahvil Yatır</button>
   </div>
 </header>
 
@@ -277,7 +330,7 @@ input:focus, select.fs:focus { border-color: var(--accent); }
 <div class="main">
 
   <!-- LEFT: Order Book -->
-  <div class="panel">
+  <div class="panel" id="panelOB">
     <div class="ph">Order Book <span class="badge" id="obIsin">—</span></div>
     <div class="ob-col-header">
       <span>Fiyat</span><span>Nominal</span><span>Toplam Tutar</span><span>Verim</span>
@@ -295,7 +348,7 @@ input:focus, select.fs:focus { border-color: var(--accent); }
   </div>
 
   <!-- CENTER: Ticker + Chart + Trades -->
-  <div class="panel center-panel">
+  <div class="panel center-panel" id="panelChart">
 
     <div class="ticker-bar">
       <div>
@@ -333,7 +386,7 @@ input:focus, select.fs:focus { border-color: var(--accent); }
   </div>
 
   <!-- RIGHT: Order form + Portfolio + Orders -->
-  <div class="panel right-panel">
+  <div class="panel right-panel" id="panelOrder">
     <div class="ph">Emir Ver</div>
     <div class="order-form">
       <div class="side-tabs">
@@ -367,6 +420,31 @@ input:focus, select.fs:focus { border-color: var(--accent); }
 
     <div class="ph" style="flex-shrink:0">Emirlerim</div>
     <div class="orders-body" id="ordersBody"><div class="empty">Kullanıcı seçin</div></div>
+  </div>
+</div>
+
+<div class="mob-tabbar">
+  <div class="mob-tab active" data-panel="ob" onclick="mobTab('ob')">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <rect x="2" y="5" width="14" height="1.5" rx=".75" fill="currentColor" opacity=".5"/>
+      <rect x="2" y="8.25" width="14" height="1.5" rx=".75" fill="currentColor"/>
+      <rect x="2" y="11.5" width="14" height="1.5" rx=".75" fill="currentColor" opacity=".5"/>
+    </svg>
+    Piyasa
+  </div>
+  <div class="mob-tab" data-panel="chart" onclick="mobTab('chart')">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <polyline points="2,13 6,9 9,11 13,6 16,8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Grafik
+  </div>
+  <div class="mob-tab" data-panel="order" onclick="mobTab('order')">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <rect x="3" y="3" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="9" y1="6" x2="9" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="6" y1="9" x2="12" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    İşlem
   </div>
 </div>
 
@@ -961,6 +1039,16 @@ function setStatus(msg, err = false) {
 }
 
 init();
+
+// ── Mobile panel switcher ─────────────────────────────────────────────────────
+const MOB_MAP = { ob: 'panelOB', chart: 'panelChart', order: 'panelOrder' };
+function mobTab(name) {
+  Object.values(MOB_MAP).forEach(id => document.getElementById(id).classList.remove('mob-active'));
+  document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(MOB_MAP[name]).classList.add('mob-active');
+  document.querySelector(`.mob-tab[data-panel="${name}"]`).classList.add('active');
+}
+if (window.innerWidth <= 768) mobTab('ob');
 </script>
 
 <!-- ── Disclaimer Modal ── -->
