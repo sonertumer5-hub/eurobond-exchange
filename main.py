@@ -116,15 +116,18 @@ def _mm_cycle(traders, isin, mid):
     except Exception:
         pass
 
+def _mm_run_bond(traders, isin, mid):
+    while True:
+        _mm_cycle(traders, isin, mid)
+        time.sleep(2)
+
 def _mm_run():
     time.sleep(5)
     traders = _mm_setup()
-    cycle = 0
-    while True:
-        isin, mid = BONDS_MM[cycle % len(BONDS_MM)]
-        _mm_cycle(traders, isin, mid)
-        cycle += 1
-        time.sleep(2)
+    for isin, mid in BONDS_MM:
+        t = threading.Thread(target=_mm_run_bond, args=(traders, isin, mid), daemon=True)
+        t.start()
+        time.sleep(0.5)  # staggered start
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
