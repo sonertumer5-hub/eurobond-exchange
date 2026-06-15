@@ -425,8 +425,8 @@ async function loadBonds() {
 function renderBondTabs() {
   document.getElementById('bondTabs').innerHTML = bonds.map(b => `
     <div class="bond-tab ${b.isin === selectedIsin ? 'active' : ''}" onclick="selectBond('${b.isin}')">
-      ${b.issuer.split(' ').slice(0, 2).join(' ')}
-      <span class="coupon">%${b.coupon_rate.toFixed(2)}</span>
+      ${b.isin}
+      <span class="coupon">%${b.coupon_rate.toFixed(3)}</span>
       <span class="currency">${b.currency}</span>
     </div>
   `).join('');
