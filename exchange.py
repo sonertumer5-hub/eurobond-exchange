@@ -27,14 +27,14 @@ class Exchange:
 
     def _seed_bonds(self):
         sample = [
-            Bond("XS2345678901", "European Investment Bank",    1.875, "2030-05-15", FACE_VALUE, "EUR"),
-            Bond("XS1234567890", "Germany Federal Republic",    0.000, "2032-02-15", FACE_VALUE, "EUR"),
-            Bond("US900123CT57",  "Republic of Turkey",          7.625, "2029-04-26", FACE_VALUE, "USD"),
-            Bond("XS1111111111", "HSBC Holdings PLC",           3.400, "2028-11-30", FACE_VALUE, "USD"),
-            Bond("XS2222222222", "BNP Paribas SA",              2.875, "2031-07-10", FACE_VALUE, "EUR"),
-            Bond("XS3333333333", "Goldman Sachs Group Inc",     4.250, "2027-09-15", FACE_VALUE, "USD"),
-            Bond("XS4444444444", "Kingdom of Saudi Arabia",     3.625, "2033-03-04", FACE_VALUE, "USD"),
-            Bond("XS5555555555", "Apple Inc",                   2.050, "2026-09-11", FACE_VALUE, "USD"),
+            Bond("US900123CT57", "Türkiye Cumhuriyeti", 7.625, "2029-04-26", FACE_VALUE, "USD"),
+            Bond("US900123CQ28", "Türkiye Cumhuriyeti", 7.500, "2034-11-07", FACE_VALUE, "USD"),
+            Bond("US900123DA02", "Türkiye Cumhuriyeti", 6.875, "2036-03-17", FACE_VALUE, "USD"),
+            Bond("US900123CH16", "Türkiye Cumhuriyeti", 7.000, "2036-06-05", FACE_VALUE, "USD"),
+            Bond("US900123CF59", "Türkiye Cumhuriyeti", 6.750, "2040-05-30", FACE_VALUE, "USD"),
+            Bond("US900123CV03", "Türkiye Cumhuriyeti", 6.000, "2041-01-14", FACE_VALUE, "USD"),
+            Bond("US900123CR02", "Türkiye Cumhuriyeti", 4.875, "2043-04-16", FACE_VALUE, "USD"),
+            Bond("US900123DB84", "Türkiye Cumhuriyeti", 5.750, "2047-05-11", FACE_VALUE, "USD"),
         ]
         for b in sample:
             self.bonds[b.isin] = b

@@ -26,15 +26,24 @@ exchange = Exchange()
 
 # ── Market Maker (background thread) ─────────────────────────────────────────
 
-ISIN = "US900123CT57"
-MID  = 98.625
+BONDS_MM = [
+    ("US900123CT57", 98.625),
+    ("US900123CQ28", 96.500),
+    ("US900123DA02", 97.250),
+    ("US900123CH16", 97.000),
+    ("US900123CF59", 95.750),
+    ("US900123CV03", 90.500),
+    ("US900123CR02", 85.250),
+    ("US900123DB84", 88.000),
+]
 
 def _mm_setup():
     traders = []
     names = ["Alpha Fund", "Beta Capital", "Gamma Trading", "Delta AM", "Omega Bank"]
     for name in names:
         user = exchange.create_user(name, Decimal("999999999"))
-        exchange.deposit_bonds(user.id, ISIN, 99999)
+        for isin, _ in BONDS_MM:
+            exchange.deposit_bonds(user.id, isin, 99999)
         traders.append(user.id)
     return traders
 
@@ -42,40 +51,39 @@ def _mm_pending(user_id):
     return [o for o in exchange.get_user_orders(user_id)
             if o.status in (OrderStatus.PENDING, OrderStatus.PARTIAL)]
 
-def _mm_cycle(traders):
+def _mm_cycle(traders, isin, mid):
     try:
-        ob = exchange.get_order_book(ISIN, 20)
-        best_bid = float(ob["best_bid"]) if ob["best_bid"] else MID - 0.5
-        best_ask = float(ob["best_ask"]) if ob["best_ask"] else MID + 0.5
+        ob = exchange.get_order_book(isin, 20)
+        best_bid = float(ob["best_bid"]) if ob["best_bid"] else mid - 0.5
+        best_ask = float(ob["best_ask"]) if ob["best_ask"] else mid + 0.5
 
         # İptal
-        for uid in random.sample(traders, min(random.randint(3, 6), len(traders))):
-            orders = _mm_pending(uid)
+        for uid in random.sample(traders, min(random.randint(2, 4), len(traders))):
+            orders = [o for o in _mm_pending(uid) if o.bond_isin == isin]
             if orders:
-                victim = random.choice(orders)
                 try:
-                    exchange.cancel_order(uid, victim.id)
+                    exchange.cancel_order(uid, random.choice(orders).id)
                 except Exception:
                     pass
 
         # Pasif limitler
-        for _ in range(random.randint(4, 7)):
-            uid = random.choice(traders)
+        for _ in range(random.randint(3, 6)):
+            uid  = random.choice(traders)
             side = random.choice(["buy", "sell"])
             qty  = random.randint(5, 150)
             if side == "buy":
-                price = Decimal(str(round(max(best_bid - random.uniform(0.05, 0.80), 90.0), 2)))
+                price = Decimal(str(round(max(best_bid - random.uniform(0.05, 0.80), mid - 8), 2)))
             else:
-                price = Decimal(str(round(min(best_ask + random.uniform(0.05, 0.80), 110.0), 2)))
+                price = Decimal(str(round(min(best_ask + random.uniform(0.05, 0.80), mid + 8), 2)))
             try:
-                exchange.place_order(uid, ISIN, OrderSide(side), OrderType.LIMIT, qty, price)
+                exchange.place_order(uid, isin, OrderSide(side), OrderType.LIMIT, qty, price)
             except Exception:
                 pass
 
         # OB güncelle
-        ob = exchange.get_order_book(ISIN, 20)
-        best_bid = float(ob["best_bid"]) if ob["best_bid"] else MID - 0.5
-        best_ask = float(ob["best_ask"]) if ob["best_ask"] else MID + 0.5
+        ob = exchange.get_order_book(isin, 20)
+        best_bid = float(ob["best_bid"]) if ob["best_bid"] else mid - 0.5
+        best_ask = float(ob["best_ask"]) if ob["best_ask"] else mid + 0.5
 
         # Agresif limit (%50)
         if random.random() < 0.50:
@@ -85,13 +93,13 @@ def _mm_cycle(traders):
             if side == "buy" and ob["asks"]:
                 price = Decimal(str(round(best_ask + random.uniform(0.0, 0.30), 2)))
                 try:
-                    exchange.place_order(uid, ISIN, OrderSide.BUY, OrderType.LIMIT, qty, price)
+                    exchange.place_order(uid, isin, OrderSide.BUY, OrderType.LIMIT, qty, price)
                 except Exception:
                     pass
             elif side == "sell" and ob["bids"]:
                 price = Decimal(str(round(best_bid - random.uniform(0.0, 0.30), 2)))
                 try:
-                    exchange.place_order(uid, ISIN, OrderSide.SELL, OrderType.LIMIT, qty, price)
+                    exchange.place_order(uid, isin, OrderSide.SELL, OrderType.LIMIT, qty, price)
                 except Exception:
                     pass
 
@@ -102,7 +110,7 @@ def _mm_cycle(traders):
             side = random.choice(["buy", "sell"])
             if (side == "buy" and ob["asks"]) or (side == "sell" and ob["bids"]):
                 try:
-                    exchange.place_order(uid, ISIN, OrderSide(side), OrderType.MARKET, qty)
+                    exchange.place_order(uid, isin, OrderSide(side), OrderType.MARKET, qty)
                 except Exception:
                     pass
     except Exception:
@@ -111,9 +119,12 @@ def _mm_cycle(traders):
 def _mm_run():
     time.sleep(5)
     traders = _mm_setup()
+    cycle = 0
     while True:
-        _mm_cycle(traders)
-        time.sleep(3)
+        isin, mid = BONDS_MM[cycle % len(BONDS_MM)]
+        _mm_cycle(traders, isin, mid)
+        cycle += 1
+        time.sleep(2)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
