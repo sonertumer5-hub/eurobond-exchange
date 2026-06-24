@@ -268,15 +268,17 @@ input:focus, select.fs:focus { border-color: var(--accent); }
   body { overflow: hidden; font-size: 13px; }
 
   /* ─ Header ─ */
-  header { padding: 0 12px; gap: 8px; height: 48px; }
-  header svg { width: 28px; height: 28px; }
-  .logo { font-size: 14px; }
+  header { padding: 0 10px; gap: 6px; height: 48px; }
+  header svg { width: 26px; height: 26px; flex-shrink: 0; }
+  .live-dot { display: none; }
+  .logo { font-size: 12px; flex-shrink: 0; }
   .hide-mob { display: none !important; }
   select.user-select {
-    max-width: 140px; font-size: 12px; padding: 6px 8px;
-    border-radius: 8px;
+    max-width: 120px; font-size: 11px; padding: 6px 6px;
+    border-radius: 8px; min-width: 0;
   }
-  .btn-primary { padding: 7px 14px; font-size: 12px; border-radius: 8px; }
+  .ml-auto { gap: 6px; }
+  .btn-primary { padding: 8px 11px; font-size: 13px; border-radius: 8px; font-weight: 700; }
 
   /* ─ Bond tabs: short label ('29 + coupon) ─ */
   .bond-tabs {
@@ -343,7 +345,7 @@ input:focus, select.fs:focus { border-color: var(--accent); }
   .price-buy, .price-sell { font-size: 13px; }
 
   /* ─ Right panel (order form) ─ */
-  .order-form { padding: 12px; }
+  .order-form { padding: 12px; flex-shrink: 0; }
   .side-tabs  { gap: 6px; margin-bottom: 12px; }
   .side-tab   { padding: 10px; font-size: 13px; border-radius: 8px; }
   .type-toggle { gap: 6px; }
@@ -359,6 +361,13 @@ input:focus, select.fs:focus { border-color: var(--accent); }
   .port-val, .hold-qty  { font-size: 13px; }
   .order-item  { padding: 9px 14px; }
   .os-buy, .os-sell { font-size: 12px; }
+
+  /* Right panel: scroll as one column instead of two independent flex:1 zones
+     (avoids large empty gaps when portfolio/orders are short) */
+  .right-panel { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .right-panel .ph { flex-shrink: 0; }
+  .portfolio-body, .orders-body { flex: 0 0 auto; overflow: visible; }
+  .portfolio-body .empty, .orders-body .empty { padding: 14px; }
 
   /* ─ Status / footer ─ */
   .bottom-bar { display: none; }
@@ -396,13 +405,13 @@ input:focus, select.fs:focus { border-color: var(--accent); }
     <polyline points="19,24 22,19.5 24.5,21.5 28.5,14.5" stroke="#3fb950" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
     <circle cx="28.5" cy="14.5" r="1.5" fill="#3fb950"/>
   </svg>
-  <div class="logo">eurobondlar<span>.com</span></div>
+  <div class="logo">eurobondlar<span class="hide-mob">.com</span></div>
   <select class="user-select" id="userSelect" onchange="onUserChange()">
     <option value="">— Kullanıcı seç —</option>
   </select>
   <div class="ml-auto">
     <a href="/calculator" class="hide-mob" style="color:var(--muted);text-decoration:none;font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;margin-right:4px;">Hesap Makinası</a>
-    <button class="btn-primary" onclick="showCreateUserModal()">+ Kullanıcı</button>
+    <button class="btn-primary" onclick="showCreateUserModal()">+<span class="hide-mob"> Kullanıcı</span></button>
     <button class="btn-ghost hide-mob" onclick="showDepositModal()">Para Yatır</button>
     <button class="btn-ghost hide-mob" onclick="showDepositBondModal()">Tahvil Yatır</button>
   </div>
