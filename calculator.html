@@ -203,7 +203,7 @@ table.cf tfoot td { font-weight: 700; color: var(--text); border-top: 1px solid 
         </div>
 
         <div class="fg">
-          <label>Nominal Tutar (USD)</label>
+          <label>Nominal Tutar</label>
           <input class="ctrl" type="number" id="inNominal" placeholder="ör: 100 000" step="1000" min="1000" oninput="calc()">
         </div>
 
@@ -334,14 +334,44 @@ table.cf tfoot td { font-weight: 700; color: var(--text); border-top: 1px solid 
 <script>
 // ── Türkiye Eurobondları (Hazine, aktif ihraçlar) ────────────────────────────
 const BONDS = [
-  { isin:"US900123CT57", coupon:7.625, maturity:"2029-04-26" },
-  { isin:"US900123CQ28", coupon:7.500, maturity:"2034-11-07" },
-  { isin:"US900123DA02", coupon:6.875, maturity:"2036-03-17" },
-  { isin:"US900123CH16", coupon:7.000, maturity:"2036-06-05" },
-  { isin:"US900123CF59", coupon:6.750, maturity:"2040-05-30" },
-  { isin:"US900123CV03", coupon:6.000, maturity:"2041-01-14" },
-  { isin:"US900123CR02", coupon:4.875, maturity:"2043-04-16" },
-  { isin:"US900123DB84", coupon:5.750, maturity:"2047-05-11" },
+  // USD
+  { isin:"US900123CK49", coupon:4.875,  maturity:"2026-10-09", currency:"USD" },
+  { isin:"US900123CL22", coupon:6.000,  maturity:"2027-03-25", currency:"USD" },
+  { isin:"USM88269US88", coupon:8.600,  maturity:"2027-09-24", currency:"USD" },
+  { isin:"US900123DF45", coupon:9.875,  maturity:"2028-01-15", currency:"USD" },
+  { isin:"US900123CP36", coupon:5.125,  maturity:"2028-02-17", currency:"USD" },
+  { isin:"US900123CQ19", coupon:6.125,  maturity:"2028-10-24", currency:"USD" },
+  { isin:"US900123DH01", coupon:9.375,  maturity:"2029-03-14", currency:"USD" },
+  { isin:"US900123CT57", coupon:7.625,  maturity:"2029-04-26", currency:"USD" },
+  { isin:"US900123AL40", coupon:11.875, maturity:"2030-01-15", currency:"USD" },
+  { isin:"US900123CY43", coupon:5.250,  maturity:"2030-03-13", currency:"USD" },
+  { isin:"US900123DJ66", coupon:9.125,  maturity:"2030-07-13", currency:"USD" },
+  { isin:"US900123DA57", coupon:5.950,  maturity:"2031-01-15", currency:"USD" },
+  { isin:"US900123DV94", coupon:6.375,  maturity:"2031-05-22", currency:"USD" },
+  { isin:"US900123DC14", coupon:5.875,  maturity:"2031-06-26", currency:"USD" },
+  { isin:"US900123DP27", coupon:7.125,  maturity:"2032-02-12", currency:"USD" },
+  { isin:"US900123DL13", coupon:7.125,  maturity:"2032-07-17", currency:"USD" },
+  { isin:"US900123DG28", coupon:9.375,  maturity:"2033-01-19", currency:"USD" },
+  { isin:"US900123DT49", coupon:6.300,  maturity:"2033-03-14", currency:"USD" },
+  { isin:"US900123DD96", coupon:6.500,  maturity:"2033-09-20", currency:"USD" },
+  { isin:"US900123AT75", coupon:8.000,  maturity:"2034-02-14", currency:"USD" },
+  { isin:"US900123DK30", coupon:7.625,  maturity:"2034-05-15", currency:"USD" },
+  { isin:"US900123DN78", coupon:6.500,  maturity:"2035-01-03", currency:"USD" },
+  { isin:"US900123DR82", coupon:6.950,  maturity:"2035-09-16", currency:"USD" },
+  { isin:"US900123AY60", coupon:6.875,  maturity:"2036-03-17", currency:"USD" },
+  { isin:"US900123DS65", coupon:6.800,  maturity:"2036-11-04", currency:"USD" },
+  { isin:"US900123DU12", coupon:6.875,  maturity:"2038-01-14", currency:"USD" },
+  { isin:"US900123BB58", coupon:7.250,  maturity:"2038-03-05", currency:"USD" },
+  { isin:"US900123BG46", coupon:6.750,  maturity:"2040-05-30", currency:"USD" },
+  { isin:"US900123BJ84", coupon:6.000,  maturity:"2041-01-14", currency:"USD" },
+  { isin:"US900123CB40", coupon:4.875,  maturity:"2043-04-16", currency:"USD" },
+  { isin:"US900123CG37", coupon:6.625,  maturity:"2045-02-17", currency:"USD" },
+  { isin:"US900123CM05", coupon:5.750,  maturity:"2047-05-13", currency:"USD" },
+  // EUR
+  { isin:"XS2361850527", coupon:4.375, maturity:"2027-07-08", currency:"EUR" },
+  { isin:"XS2790222116", coupon:5.875, maturity:"2030-05-21", currency:"EUR" },
+  { isin:"XS3123715297", coupon:5.200, maturity:"2031-08-18", currency:"EUR" },
+  { isin:"XS3293834662", coupon:5.150, maturity:"2034-03-10", currency:"EUR" },
 ];
 
 let bond = null;
@@ -367,7 +397,7 @@ function onBondChange() {
   if (idx === '') { bond = null; clearRight(); return; }
   bond = BONDS[parseInt(idx)];
   document.getElementById('si-isin').textContent  = bond.isin;
-  document.getElementById('si-ccy').textContent   = 'USD';
+  document.getElementById('si-ccy').textContent   = bond.currency;
   document.getElementById('si-cpn').textContent   = bond.coupon.toFixed(3) + '%';
   document.getElementById('si-mat').textContent   = bond.maturity;
   calc();
@@ -421,8 +451,9 @@ function solveYTM(cfs, dirtyPct) {
 }
 
 // ── Format helpers ────────────────────────────────────────────────────────────
-const fmt2 = v => '$' + v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-const fmt0 = v => '$' + Math.round(v).toLocaleString('en-US');
+const curSym = () => (bond && bond.currency === 'EUR') ? '€' : '$';
+const fmt2 = v => curSym() + v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt0 = v => curSym() + Math.round(v).toLocaleString('en-US');
 
 // ── Main calculation ──────────────────────────────────────────────────────────
 function calc() {
