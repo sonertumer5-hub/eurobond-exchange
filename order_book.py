@@ -29,8 +29,14 @@ class OrderBook:
     def add_order(self, order: Order) -> List[Trade]:
         self._orders[order.id] = order
         if order.order_type == OrderType.MARKET:
-            return self._match_market(order)
-        return self._match_limit(order)
+            trades = self._match_market(order)
+        else:
+            trades = self._match_limit(order)
+        # Bellek sınırı: tamamlanan emirleri temizle
+        if len(self._orders) > 2000:
+            self._orders = {oid: o for oid, o in self._orders.items()
+                            if o.status in (OrderStatus.PENDING, OrderStatus.PARTIAL)}
+        return trades
 
     def cancel_order(self, order_id: str) -> bool:
         order = self._orders.get(order_id)

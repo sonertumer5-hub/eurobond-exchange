@@ -138,6 +138,20 @@ class Exchange:
             self._settle(t)
             self.trades.append(t)
 
+        # Bellek sınırı: son 2000 işlemi tut
+        if len(self.trades) > 2000:
+            self.trades = self.trades[-2000:]
+
+        # Bellek sınırı: tamamlanan emirleri temizle, 5000'i geçince
+        if len(self.all_orders) > 5000:
+            active = {oid: o for oid, o in self.all_orders.items()
+                      if o.status in (OrderStatus.PENDING, OrderStatus.PARTIAL)}
+            done = [(oid, o) for oid, o in self.all_orders.items()
+                    if o.status not in (OrderStatus.PENDING, OrderStatus.PARTIAL)]
+            done.sort(key=lambda x: x[1].updated_at)
+            keep_done = dict(done[-1000:])
+            self.all_orders = {**active, **keep_done}
+
         # Market buy iptal olursa rezervi serbest bırak
         if order.status == OrderStatus.CANCELLED and side == OrderSide.BUY and order_type == OrderType.MARKET:
             pass  # market için cash rezerve edilmedi
